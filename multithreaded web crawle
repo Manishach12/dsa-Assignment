@@ -1,0 +1,68 @@
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+public class WebCrawler {
+    private final Set<String> visitedUrls = new HashSet<>(); // Avoid duplicates
+    private final Queue<String> urlQueue = new LinkedList<>(); // BFS queue
+    private final ExecutorService executorService;
+    private final int MAX_THREADS = 5; // Number of concurrent threads
+    private final int MAX_PAGES = 20; // Limit the number of pages to crawl
+
+    public WebCrawler(String startUrl) {
+        executorService = Executors.newFixedThreadPool(MAX_THREADS);
+        urlQueue.add(startUrl);
+    }
+
+    // Starts the crawling process
+    public void startCrawling() {
+        while (!urlQueue.isEmpty() && visitedUrls.size() < MAX_PAGES) {
+            String url = urlQueue.poll(); // Get the next URL
+            if (url == null || visitedUrls.contains(url)) {
+                continue;
+            }
+
+            visitedUrls.add(url);
+            executorService.submit(() -> crawlPage(url));
+        }
+
+        executorService.shutdown(); // Shut down executor after all tasks are submitted
+    }
+
+    // Crawls a single page
+    private void crawlPage(String url) {
+        try {
+            System.out.println("Crawling: " + url);
+            Document doc = Jsoup.connect(url).get();
+
+            // Extract and print the page title
+            System.out.println("Title: " + doc.title());
+
+            // Extract links and add to the queue
+            Elements links = doc.select("a[href]");
+            for (Element link : links) {
+                String nextUrl = link.absUrl("href");
+                if (!visitedUrls.contains(nextUrl) && nextUrl.startsWith("http")) {
+                    urlQueue.add(nextUrl);
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("Failed to fetch: " + url + " (" + e.getMessage() + ")");
+        }
+    }
+
+    public static void main(String[] args) {
+        String startUrl = "https://example.com"; // Change to your starting URL
+        WebCrawler crawler = new WebCrawler(startUrl);
+        crawler.startCrawling();
+    }
+}
