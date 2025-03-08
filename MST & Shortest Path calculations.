@@ -1,0 +1,47 @@
+import org.jgrapht.Graph;
+import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
+import org.jgrapht.alg.spanning.KruskalMinimumSpanningTree;
+import org.jgrapht.graph.DefaultWeightedEdge;
+import org.jgrapht.graph.SimpleWeightedGraph;
+
+import java.util.Set;
+
+public class NetworkGraph {
+    private Graph<String, DefaultWeightedEdge> graph;
+
+    public NetworkGraph() {
+        // Creating an undirected weighted graph
+        graph = new SimpleWeightedGraph<>(DefaultWeightedEdge.class);
+    }
+
+    // Adds a node (server/client) to the graph
+    public void addNode(String node) {
+        graph.addVertex(node);
+    }
+
+    // Adds an edge (connection) between two nodes with a given cost
+    public void addConnection(String node1, String node2, double cost) {
+        DefaultWeightedEdge edge = graph.addEdge(node1, node2);
+        if (edge != null) {
+            graph.setEdgeWeight(edge, cost);
+        }
+    }
+
+    // Computes the Minimum Spanning Tree (MST) using Kruskal’s algorithm
+    public Set<DefaultWeightedEdge> getMinimumSpanningTree() {
+        KruskalMinimumSpanningTree<String, DefaultWeightedEdge> mst =
+                new KruskalMinimumSpanningTree<>(graph);
+        return mst.getSpanningTree().getEdges();
+    }
+
+    // Computes the shortest path between two nodes using Dijkstra’s algorithm
+    public double getShortestPath(String source, String target) {
+        DijkstraShortestPath<String, DefaultWeightedEdge> dijkstra =
+                new DijkstraShortestPath<>(graph);
+        return dijkstra.getPathWeight(source, target);
+    }
+
+    public Graph<String, DefaultWeightedEdge> getGraph() {
+        return graph;
+    }
+}
