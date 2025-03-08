@@ -1,0 +1,51 @@
+class ThreadController {
+    private int n;
+    private int counter = 1; // Start from 1
+    private boolean zeroTurn = true; // Zero prints first
+    private final Object lock = new Object();
+
+    public ThreadController(int n) {
+        this.n = n;
+    }
+
+    public void printZero(NumberPrinter printer) throws InterruptedException {
+        for (int i = 0; i < n; i++) {
+            synchronized (lock) {
+                while (!zeroTurn) {
+                    lock.wait(); // Wait if not zero's turn
+                }
+                printer.printZero();
+                zeroTurn = false;
+                lock.notifyAll(); // Notify other threads
+            }
+        }
+    }
+
+    public void printEven(NumberPrinter printer) throws InterruptedException {
+        for (int i = 2; i <= n; i += 2) {
+            synchronized (lock) {
+                while (zeroTurn || counter % 2 != 0) {
+                    lock.wait(); // Wait for zero or odd thread
+                }
+                printer.printEven(counter);
+                counter++;
+                zeroTurn = true;
+                lock.notifyAll();
+            }
+        }
+    }
+
+    public void printOdd(NumberPrinter printer) throws InterruptedException {
+        for (int i = 1; i <= n; i += 2) {
+            synchronized (lock) {
+                while (zeroTurn || counter % 2 == 0) {
+                    lock.wait(); // Wait for zero or even thread
+                }
+                printer.printOdd(counter);
+                counter++;
+                zeroTurn = true;
+                lock.notifyAll();
+            }
+        }
+    }
+}
